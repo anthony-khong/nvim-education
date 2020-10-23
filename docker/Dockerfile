@@ -1,0 +1,1 @@
+FROM kaixhin/torch:latest

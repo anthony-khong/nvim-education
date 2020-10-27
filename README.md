@@ -52,3 +52,34 @@ end
 ```
 
 So, if our iterator function is f, the invariant state is s, and the initial value for the control variable is a0, the control variable will loop over the values a1 = f(s, a0), a2 = f(s, a1), and so on, until ai is nil. If the for has other variables, they simply get the extra values returned by each call to f.
+
+On errors
+Because Lua is an extension language, frequently embedded in an application, it cannot simply crash or exit when an error happens. Instead, whenever an error occurs, Lua ends the current chunk and returns to the application.
+
+### Part II
+
+```lua
+-- WARNING: bad code ahead!!
+local buff = ""
+for line in io.lines() do
+buff = buff .. line .. "\n"
+end
+```
+
+To understand what happens, let us assume that we are in the middle of the read loop; buff is already a string with 50 KB and each line has 20 bytes. When Lua concatenates buff..line.."\n", it creates a new string with 50,020 bytes and copies 50 KB from buff into this new string. That is, for each new line, Lua moves 50 KB of memory, and growing. After reading 100 new lines (only 2 KB), Lua has already moved more than 5 MB of memory. 
+
+Do this instead:
+
+```lua
+local t = {}
+for line in io.lines() do
+    table.insert(t, line)
+end
+s = table.concat(t, "\n") .. "\n"
+```
+
+Metatables allow us to change the behavior of a table. For instance, using metatables, we can define how Lua computes the expression a+b, where a and b are tables. Whenever Lua tries to add two tables, it checks whether either of them has a metatable and whether that metatable has an __add field. If Lua finds this field, it calls the corresponding value (the so-called metamethod, which should be a function) to compute the sum.
+
+To choose a metamethod, Lua does the following: (1) If the first value has a metatable with an __add field, Lua uses this value as the metamethod, independently of the second value; (2) otherwise, if the second value has a metatable with an __add field, Lua uses this value as the metamethod; (3) otherwise, Lua raises an error. 
+
+An equality comparison never raises an error, but if two objects have different metamethods, the equality operation results in false, without even calling any metamethod. Again, this behavior mimics the common behavior of Lua, which always classifies strings as different from numbers, regardless of their values. Lua calls the equality metamethod only when the two objects being compared share this metamethod.

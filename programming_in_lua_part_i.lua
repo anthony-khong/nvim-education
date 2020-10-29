@@ -82,4 +82,3 @@ function rename (arg)
     return os.rename(arg.old, arg.new)
 end
 rename{old="temp.lua", new="temp1.lua"}
-
